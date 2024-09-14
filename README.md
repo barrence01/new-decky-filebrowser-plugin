@@ -1,4 +1,6 @@
-# Decky File Browser Plugin
+# New Decky File Browser Plugin
+
+* This is a fork of decky-filebrowser-plugin from https://github.com/heydemoura *
 
 Access your Steam Deck files remotely from any browser.
 
