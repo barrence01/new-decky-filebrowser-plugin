@@ -20,43 +20,48 @@ const Content: VFC = () => {
   const [ serverIP, setServerIP ] = useState( "127.0.0.1" );
   const [ processPID, setProcessPID ] = useState( -1 );
   const [ port, setPort ] = useState( null );
+  const [errorMessage, setErrorMessage] = useState(""); // Error message state
 
   // @ts-ignore
   const { fileBrowserManager } = useContext(AppContext);
-  const serverApi = fileBrowserManager.getServer();
+  //const serverApi = fileBrowserManager.getServer();
 
   const isServerRunning = serverStatus && processPID > 0;
 
   const handleStartServer = async () => {
-    if ( isServerRunning ) {
-      console.log( 'Server is running, closing' );
-      const result = await serverApi.callPluginMethod("stopFileBrowser", {
-        pid: processPID
-      });
+    try{
+      if ( isServerRunning ) {
+        console.log( 'Server is running, closing' );
+        const result = await fileBrowserManager.stopFileBrowser();
 
-      if (result.success) {
-        setProcessPID( -1 );
-        setServerStatus( false );
-        console.log( 'Server closed' );
-      } else {
-        console.log( 'Failed to close the server' );
-        console.error( result );
+        if (result.result?.status && (result.result?.status == "offline")) {
+          setProcessPID( -1 );
+          setServerStatus( false );
+          console.log( 'Server closed' );
+        } else {
+          console.log( 'Failed to close the server', result );
+          showError('Failed to close the server');
+          await fileBrowserManager.fileBrowserSendLogError('Failed to close the server' + result);
+        }
+        return;
       }
 
-      return;
-    }
+      const result = await fileBrowserManager.startFileBrowser();
 
-    const result = await serverApi.callPluginMethod("startFileBrowser", {
-      port: fileBrowserManager.getPort()
-    });
-
-    if (result.success) {
-      await fileBrowserManager.getFileBrowserStatus();
-      setServerIP( fileBrowserManager.getIPV4Address() );
-      setProcessPID( result.result as number )
-      setServerStatus( true );
-    } else {
-      console.error( result );
+      if (result.result?.status && (result.result?.status == "online")) {
+        await fileBrowserManager.getFileBrowserStatus();
+        setPort(fileBrowserManager.getPort());
+        setServerIP(fileBrowserManager.getIPV4Address());
+        setServerStatus(fileBrowserManager.isServerRunning());
+        setProcessPID(fileBrowserManager.getPID());
+      } else {
+        console.error( 'Failed to start the server', result );
+        showError('Failed to start the server');
+        await fileBrowserManager.fileBrowserSendLogError('Failed to start the server' + result);
+      }
+    } catch (error) {
+      console.error('Failed to toggle file browser', error);
+      await fileBrowserManager.fileBrowserSendLogError('Failed to toggle file browser' + error);
     }
   }
 
@@ -67,18 +72,46 @@ const Content: VFC = () => {
 
   useEffect( () => {
     const loadStatus = async () => {
-      setIsLoading( true );
-      await fileBrowserManager.getFileBrowserStatus();
-      setPort( fileBrowserManager.getPort() );
-      setIsLoading( false );
-    }
+      try{
+        setIsLoading( true );
+        await fileBrowserManager.getFileBrowserStatus();
+        if(fileBrowserManager.isServerRunning()) {
+          setPort(fileBrowserManager.getPort());
+          setServerStatus(fileBrowserManager.isServerRunning());
+          setProcessPID(fileBrowserManager.getPID());
+          setServerIP(fileBrowserManager.getIPV4Address());
+        } else {
+          setServerStatus(fileBrowserManager.isServerRunning());
+          setPort( fileBrowserManager.getPort());
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Failed to load file browser status', error);
+        showError('Failed to load file browser status');
+        await fileBrowserManager.fileBrowserSendLogError('Failed to load file browser status' + error);
+      }
+    };
 
     loadStatus();
-  }, [] );
+  }, []);
+
+  const showError = (message: string) => {
+    setErrorMessage(message);
+    setTimeout(() => {
+      setErrorMessage("");
+    }, 4000);
+  };
 
   return (
     <>
       <PanelSection title={ isServerRunning ? "Server ON" : "Server OFF" }>
+        {errorMessage && (
+            <PanelSectionRow>
+              <div style={{ color: 'red', fontWeight: 'bold' }}>
+                {errorMessage}
+              </div>
+            </PanelSectionRow>
+          )}
         <PanelSectionRow>
           <ButtonItem layout="below"
             onClick={handleStartServer}
