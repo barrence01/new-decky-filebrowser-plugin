@@ -20,7 +20,7 @@ const Content: VFC = () => {
   const [ serverIP, setServerIP ] = useState( "127.0.0.1" );
   const [ processPID, setProcessPID ] = useState( -1 );
   const [ port, setPort ] = useState( null );
-  const [errorMessage, setErrorMessage] = useState(""); // Error message state
+  const [errorMessage, setErrorMessage] = useState("");
 
   // @ts-ignore
   const { fileBrowserManager } = useContext(AppContext);

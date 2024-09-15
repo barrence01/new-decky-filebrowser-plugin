@@ -18,11 +18,15 @@ const Settings = () => {
   const [successMessage, setSuccessMessage] = useState("");
 
   const handleSave = useCallback(async () => {
-    await fileBrowserManager.fileBrowserSendLogInfo("Attempting to save port value: " + port);
-    await fileBrowserManager.fileBrowserSendLogInfo("Has errors: " + invalidPortError);
+
+    if(!port) {
+      showError("The field cannot be empty.")
+      return;
+    }
+
     setIsSaving(true);
     if(!invalidPortError) {
-      await fileBrowserManager.setPort(port);
+      await fileBrowserManager.setPort(+port);
       showSuccess("Port Number saved successfully.");
     }
     
@@ -30,28 +34,41 @@ const Settings = () => {
   }, [port, invalidPortError]);
 
   const handlePortChange = (e) => {
-
+    setPort(e.target.value);
     showError("");
     setInvalidPortError(true);
 
+    if(!e.target.value) {
+      return;
+    }
+
+    if (e.target.value.length > 5) {
+      setPort(e.target.value.substring(0, 5));
+    }
+
     const isNumeric = !isNaN(+e.target.value)
     if (!isNumeric) {
+      showError("The field must be numeric.")
       return;
     }
     const portNumber = +e.target.value;
 
     // Decky uses port 1337
     if (portNumber == 1337) {
-      showError("The port number 1337 cannot be used.")
+      showError("The port number 1337 cannot be used because it's already being used by decky.")
       return;
     }
 
     // To use a port equal or lower than 1024 on Linux, you need root access
-    if((portNumber < 1024)  || (portNumber > 65535)) {
+    if(portNumber < 1024) {
+      showError("The port number must be higher than 1024.")
+      return;
+    }
+    if(portNumber > 65535) {
+      showError("The port number must be lower than 65536.")
       return;
     }
 
-    setPort(portNumber);
     setInvalidPortError(false);
   };
 
@@ -91,20 +108,16 @@ const Settings = () => {
             <TextField
               label="Port"
               description="TCP port used for connection. The port number 1337 cannot be used because of decky."
-              mustBeNumeric
-              rangeMin={1025}
-              rangeMax={65535}
               onChange={handlePortChange}
+              value={port}
               style={{
                 border: invalidPortError ? "1px red solid" : undefined,
               }}
             />
             {errorMessage && (
-            <PanelSectionRow>
               <div style={{ color: 'red', fontWeight: '300' }}>
                 {errorMessage}
               </div>
-            </PanelSectionRow>
             )}
             {successMessage && (
             <PanelSectionRow>
