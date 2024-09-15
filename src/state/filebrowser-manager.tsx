@@ -42,11 +42,11 @@ export default class FileBrowserManager {
   async getPortFromSettings() {
     const result = await this.serverAPI.callPluginMethod("get_setting", { key: "port" });
 
-    if ( result.success ) {
+    if ( result.result?.output ) {
       this.port = result.result as Number;
-      return;
+      return this.getPort();
     } else {
-      return new Error( result.result as string );
+      return this.getPort();
     }
   }
 
@@ -55,9 +55,9 @@ export default class FileBrowserManager {
 
     if ( result.success ) {
       this.port = result.result as Number;
-      return;
+      return this.getPort();
     } else {
-      return new Error( result.result as string );
+      return this.getPort();
     }
   }
 
