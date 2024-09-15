@@ -6,9 +6,6 @@ import socket
 # Initialize decky-loader settings manager
 from settings import SettingsManager
 
-# The decky plugin module is located at decky-loader/plugin
-# For easy intellisense checkout the decky-loader code one directory up
-# or add the `decky-loader/plugin` path to `python.analysis.extraPaths` in `.vscode/settings.json`
 import decky_plugin
 
 settings_dir = decky_plugin.DECKY_PLUGIN_SETTINGS_DIR
@@ -28,25 +25,34 @@ settings.read()
 
 class Plugin:
     async def getFileBrowserStatus( self ):
-        if os.path.exists( pidfile ):
-            with open( pidfile, "r" ) as file:
-                pid_str = file.read().strip()
-
-            hostname = socket.gethostname()
-            ipv4_address = socket.gethostbyname(hostname)
-
+        if not os.path.exists( pidfile ):
+            decky_plugin.logger.info("The server is not online.")
             return {
-                "pid": pid_str,
-                "ipv4_address": ipv4_address,
-                "port": settings.getSetting("port"),
-            }
-
-        else:
-            return {
+                "status": "offline",
                 "port": settings.getSetting("port")
             }
 
+        with open( pidfile, "r" ) as file:
+            pid_str = file.read().strip()
+
+        hostname = socket.gethostname()
+        ipv4_address = socket.gethostbyname(hostname)
+
+        decky_plugin.logger.info(f'The server is online. pid {pid_str} - ipv4_address {ipv4_address} - port {settings.getSetting("port")}')
+
+        return {
+            "status": "online",
+            "pid": pid_str,
+            "ipv4_address": ipv4_address,
+            "port": settings.getSetting("port")
+        }
+
+
     async def startFileBrowser( self, port = 8082 ):
+        if os.path.exists(pidfile):
+            decky_plugin.logger.info("The server has already been started. Stopping it first.")
+            await self.stopFileBrowser( self )
+
         command = (
             filebrowser_bin +
             " -p " + str(port) +
@@ -60,32 +66,58 @@ class Plugin:
         decky_plugin.logger.info("Running FileBrowser command: " + command)
         process = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
 
-        # Defines the received port as the port setting
         settings.setSetting("port", port)
 
-        with open(pidfile, "w") as file:
+        with open(pidfile, "w+") as file:
             file.write(str(process.pid))
 
-        return process.pid
+        return {
+            "status": "online",
+            "pid": process.pid
+        }
 
-    async def stopFileBrowser( self, pid ):
+    async def stopFileBrowser( self ):
+        if not os.path.exists(pidfile):
+            decky_plugin.logger.info("No server is currently running (no pidfile found).")
+            return
+
         with open(pidfile, "r") as file:
             pid_str = file.read().strip()
 
-        command = "kill " + pid_str
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        decky_plugin.logger.info(f"The process ID is {pid_str}. Attempting to kill it.")
+        command = f"kill {pid_str}"
+        process = await asyncio.create_subprocess_shell(command, shell=True, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
 
-        output, error = process.communicate()
+        output, error = await process.communicate()
         output_str = output.decode("utf-8")
+        error_str = error.decode("utf-8")
 
-        if os.path.exists(pidfile):
-            # Delete the file
-            os.remove(pidfile)
+        if error_str != "":
+            decky_plugin.logger.error(f"Failed to kill process {pid_str}: {error_str}")
+        else:
+            decky_plugin.logger.info(f"Process {pid_str} killed successfully.")
 
-        return output_str
+        os.remove(pidfile)
+        decky_plugin.logger.info(f"pidfile {pidfile} removed successfully.")
+
+        if error_str != "":
+            return {
+                "status": "error",
+                "output": output_str
+            }
+        return {
+            "status": "offline",
+            "output": output_str
+        }
+
+    async def logInfo( self, msg = "Javascript: no content" ):
+        decky_plugin.logger.info(msg)
+
+    async def logError( self, msg = "Javascript: no content" ):
+        decky_plugin.logger.error(msg)
 
     async def get_setting( self, key ):
-        return settings.getSetting( key );
+        return settings.getSetting( key )
 
     async def save_user_settings( self, key: str, value ):
         decky_plugin.logger.info("Changing settings - {}: {}".format( key, value ))
@@ -94,28 +126,11 @@ class Plugin:
     # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
     async def _main(self):
         decky_plugin.logger.info("Hello World!")
+        if os.path.exists(pidfile):
+            os.remove(pidfile)
 
     # Function called first during the unload process, utilize this to handle your plugin being removed
     async def _unload(self):
         decky_plugin.logger.info("Goodbye World!")
         pass
 
-    # Migrations that should be performed before entering `_main()`.
-    # async def _migration(self):
-    #     decky_plugin.logger.info("Migrating")
-        # Here's a migration example for logs:
-        # - `~/.config/decky-template/template.log` will be migrated to `decky_plugin.DECKY_PLUGIN_LOG_DIR/template.log`
-        # decky_plugin.migrate_logs(os.path.join(decky_plugin.DECKY_USER_HOME,
-                                               # ".config", "decky-template", "template.log"))
-        # Here's a migration example for settings:
-        # - `~/homebrew/settings/template.json` is migrated to `decky_plugin.DECKY_PLUGIN_SETTINGS_DIR/template.json`
-        # - `~/.config/decky-template/` all files and directories under this root are migrated to `decky_plugin.DECKY_PLUGIN_SETTINGS_DIR/`
-        # decky_plugin.migrate_settings(
-        #     os.path.join(decky_plugin.DECKY_HOME, "settings", "template.json"),
-        #     os.path.join(decky_plugin.DECKY_USER_HOME, ".config", "decky-template"))
-        # Here's a migration example for runtime data:
-        # - `~/homebrew/template/` all files and directories under this root are migrated to `decky_plugin.DECKY_PLUGIN_RUNTIME_DIR/`
-        # - `~/.local/share/decky-template/` all files and directories under this root are migrated to `decky_plugin.DECKY_PLUGIN_RUNTIME_DIR/`
-        # decky_plugin.migrate_runtime(
-        #     os.path.join(decky_plugin.DECKY_HOME, "template"),
-        #     os.path.join(decky_plugin.DECKY_USER_HOME, ".local", "share", "decky-template"))

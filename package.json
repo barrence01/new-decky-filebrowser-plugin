@@ -1,16 +1,15 @@
 {
   "name": "decky-filebrowser-plugin",
-  "version": "0.0.1",
-  "description": "Access your Steam Deck files remotely from a browser.",
+  "version": "0.0.2",
+  "description": "Gives you access to your Steam Deck files remotely from a web browser.",
   "scripts": {
-    "build": "decky plugin build",
+    "build": "shx rm -rf dist && rollup -c",
     "watch": "rollup -c -w",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "sync": "scp -r ./ deck@192.168.0.125:/home/deck/homebrew/plugins/decky-filebrowser"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/heydemoura/decky-filebrowser-plugin.git"
+    "url": "git+https://github.com/barrence01/new-decky-filebrowser-plugin.git"
   },
   "keywords": [
     "decky",
@@ -19,12 +18,12 @@
     "steam-deck",
     "deck"
   ],
-  "author": "Heyde Moura <moura.heyde@gmail.com>",
+  "author": "Willyscoiote <barrence.santos@gmail.com>",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/heydemoura/decky-filebrowser-plugin/issues"
+    "url": "https://github.com/barrence01/new-decky-filebrowser-plugin/issues"
   },
-  "homepage": "https://github.com/heydemoura/decky-filebrowser-plugin",
+  "homepage": "https://github.com/barrence01/new-decky-filebrowser-plugin",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.1.0",
     "@rollup/plugin-json": "^4.1.0",

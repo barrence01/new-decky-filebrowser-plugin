@@ -4,6 +4,7 @@ export default class FileBrowserManager {
   private pid: Number;
   private ipv4_address: string;
   private serverAPI: ServerAPI;
+  private runStatus: boolean;
 
   // @ts-ignore
   private setServer(serv: ServerAPI): void {
@@ -12,11 +13,16 @@ export default class FileBrowserManager {
 
   constructor(serverAPI: ServerAPI) {
     this.serverAPI = serverAPI;
-    this.port = 8088;
+    this.runStatus = false;
+    this.port = 8082;
   }
 
   getServer(): ServerAPI {
     return this.serverAPI;
+  }
+
+  isServerRunning(): boolean {
+    return this.runStatus;
   }
 
   async getUserSettings() {
@@ -30,7 +36,7 @@ export default class FileBrowserManager {
   }
 
   getPort() {
-    return +this.port;
+    return this.port;
   }
 
   async getPortFromSettings() {
@@ -56,16 +62,20 @@ export default class FileBrowserManager {
   }
 
   async getFileBrowserStatus() {
-    const result = await this.serverAPI.callPluginMethod("getFileBrowserStatus", {});
+    const result = await this.serverAPI.callPluginMethod("getFileBrowserStatus");
 
-    if ( result.success ) {
+    if ( result.result?.status == "online" ) {
       this.port = result.result?.port as Number;
       this.ipv4_address = result.result?.ipv4_address as string;
       this.pid = result.result?.pid as Number;
+      this.runStatus = true;
 
-      return result.result;
+      return result.result?.status;
     } else {
-      return new Error( result.result );
+      this.port = result.result?.port as Number;
+      this.runStatus = false;
+
+      return result.result?.status;
     }
   }
 
@@ -75,5 +85,23 @@ export default class FileBrowserManager {
 
   getPID() {
     return this.pid;
+  }
+
+  async startFileBrowser() {
+    return await this.serverAPI.callPluginMethod("startFileBrowser", {
+      port: this.getPort()
+    });
+  }
+
+  async stopFileBrowser() {
+    return await this.serverAPI.callPluginMethod("stopFileBrowser");
+  }
+
+  async fileBrowserSendLogInfo( text: string ) {
+    return await this.serverAPI.callPluginMethod("logInfo", { msg: "Javascript:" + text });
+  }
+
+  async fileBrowserSendLogError( text: string ) {
+    return await this.serverAPI.callPluginMethod("logError", { msg: "Javascript:" + text });
   }
 }
