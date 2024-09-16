@@ -30,38 +30,42 @@ const Content: VFC = () => {
 
   const handleStartServer = async () => {
     try{
+      setIsLoading( true );
       if ( isServerRunning ) {
-        console.log( 'Server is running, closing' );
+        console.log( 'Server is running, closing...' );
         const result = await fileBrowserManager.stopFileBrowser();
 
         if (result.result?.status && (result.result?.status == "offline")) {
           setProcessPID( -1 );
           setServerStatus( false );
-          console.log( 'Server closed' );
-        } else {
-          console.log( 'Failed to close the server', result );
-          showError('Failed to close the server');
-          await fileBrowserManager.fileBrowserSendLogError('Failed to close the server' + result);
+          console.log( 'Server closed.' );
+          return;
         }
+
+        showError('Failed to close the server');
         return;
       }
 
       const result = await fileBrowserManager.startFileBrowser();
-
       if (result.result?.status && (result.result?.status == "online")) {
         await fileBrowserManager.getFileBrowserStatus();
         setPort(fileBrowserManager.getPort());
         setServerIP(fileBrowserManager.getIPV4Address());
         setServerStatus(fileBrowserManager.isServerRunning());
         setProcessPID(fileBrowserManager.getPID());
-      } else {
-        console.error( 'Failed to start the server', result );
-        showError('Failed to start the server');
-        await fileBrowserManager.fileBrowserSendLogError('Failed to start the server' + result);
+        return;
       }
+      if (result.result?.status && (result.result?.status == "error")) {
+        showError(result.result?.output);
+        return;
+      }
+
+      showError('Failed to start the server');
     } catch (error) {
       console.error('Failed to toggle file browser', error);
-      await fileBrowserManager.fileBrowserSendLogError('Failed to toggle file browser' + error);
+      await fileBrowserManager.fileBrowserSendLogError('Failed to toggle file browser: ' + error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -86,9 +90,8 @@ const Content: VFC = () => {
         }
         setIsLoading(false);
       } catch (error) {
-        console.error('Failed to load file browser status', error);
         showError('Failed to load file browser status');
-        await fileBrowserManager.fileBrowserSendLogError('Failed to load file browser status' + error);
+        await fileBrowserManager.fileBrowserSendLogError('Failed to load file browser status: ' + error);
       }
     };
 

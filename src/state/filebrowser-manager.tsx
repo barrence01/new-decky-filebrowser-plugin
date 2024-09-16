@@ -50,6 +50,16 @@ export default class FileBrowserManager {
     }
   }
 
+  async getUsernameFromSettings() {
+    const result = await this.serverAPI.callPluginMethod("get_setting", { key: "currentUsername" });
+
+    if ( result.result ) {
+      return result.result;
+    } else {
+      return "";
+    }
+  }
+
   async setPort(port: Number) {
     const result = await this.serverAPI.callPluginMethod("save_user_settings", { key: "port", value: port });
 
@@ -97,11 +107,21 @@ export default class FileBrowserManager {
     return await this.serverAPI.callPluginMethod("stopFileBrowser");
   }
 
+  async saveUsernamePassword(newUsername: string, newPassword: string) {
+    const result = await this.serverAPI.callPluginMethod("save_username_password", { username: newUsername, password: newPassword });
+
+    try{
+      return result.result?.output;
+    } catch (error) {
+      return "failed";
+    }
+  }
+
   async fileBrowserSendLogInfo( text: string ) {
-    return await this.serverAPI.callPluginMethod("logInfo", { msg: "Javascript:" + text });
+    return await this.serverAPI.callPluginMethod("logInfo", { msg: "Javascript: " + text });
   }
 
   async fileBrowserSendLogError( text: string ) {
-    return await this.serverAPI.callPluginMethod("logError", { msg: "Javascript:" + text });
+    return await this.serverAPI.callPluginMethod("logError", { msg: "Javascript: " + text });
   }
 }
