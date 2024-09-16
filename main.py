@@ -14,7 +14,7 @@ script_dir = decky_plugin.DECKY_PLUGIN_DIR
 pidfile = decky_plugin.DECKY_PLUGIN_RUNTIME_DIR + "/decky-filebrowser.pid"
 
 # Strings useful for starting File Browser
-filebrowser_bin = decky_plugin.DECKY_PLUGIN_DIR + "/bin/filebrowser"
+filebrowser_bin = decky_plugin.DECKY_PLUGIN_DIR + "/bin/filebrowser/filebrowser"
 filebrowser_database_path = decky_plugin.DECKY_PLUGIN_SETTINGS_DIR + "/filebrowser.db"
 filebrowser_settings_path = decky_plugin.DECKY_PLUGIN_SETTINGS_DIR + "/settings.json"
 filebrowser_cert_path = decky_plugin.DECKY_PLUGIN_DIR + "/bin/certs/cert.pem"
@@ -209,6 +209,7 @@ class Plugin:
         settings.setSetting( "database", filebrowser_database_path)
         settings.setSetting( "key", filebrowser_key_path)
         settings.setSetting( "cert", filebrowser_cert_path)
+        settings.setSetting( "root", decky_plugin.DECKY_USER_HOME)
 
 
     async def filebrowser_init( self ):

@@ -24,6 +24,20 @@
   "bugs": {
     "url": "https://github.com/barrence01/new-decky-filebrowser-plugin/issues"
   },
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "https://opensource.org/licenses/Apache-2.0"
+    },
+    {
+      "type": "BSD-3-Clause",
+      "url": "https://opensource.org/licenses/BSD-3-Clause"
+    }
+  ],
+  "additionalLicenses": {
+    "filebrowser": "Apache-2.0",
+    "newdeckyfilebrowser": "BSD-3-Clause"
+  },
   "homepage": "https://github.com/barrence01/new-decky-filebrowser-plugin",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.1.0",

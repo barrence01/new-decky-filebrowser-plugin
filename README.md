@@ -1,5 +1,7 @@
 * This is a fork of decky-filebrowser-plugin from https://github.com/heydemoura *
 
+* To manually install in decky loader the folder must be placed on home/homebrew/plugins
+
 # New Decky File Browser Plugin
 
 Access your Steam Deck files remotely from any browser.
