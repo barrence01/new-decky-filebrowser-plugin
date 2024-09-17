@@ -5,7 +5,7 @@ import {
   PanelSectionRow,
   ServerAPI,
   staticClasses,
-  Navigation,
+  showModal
 } from "decky-frontend-lib";
 import { useContext, useEffect, useState, VFC } from "react";
 import { FaServer } from "react-icons/fa";
@@ -69,11 +69,6 @@ const Content: VFC = () => {
     }
   }
 
-  const handleGoToSettings = () => {
-    Navigation.CloseSideMenus();
-    Navigation.Navigate("/decky-filebrowser-settings")
-  }
-
   useEffect( () => {
     const loadStatus = async () => {
       try{
@@ -134,18 +129,16 @@ const Content: VFC = () => {
                   value={ `https://${serverIP}:${port}` }
                   size={256}
                 />
-
             </PanelSectionRow>
           </>
         ) : (
           <>
             <PanelSectionRow>
               <ButtonItem
-                layout="below"
-                onClick={ handleGoToSettings }
-                disabled={ isLoading }
+                onClick={() =>
+                showModal(<Settings  fileBrowserManager={fileBrowserManager} />, window)}
               >
-                Go to Settings
+              Go to Settings
               </ButtonItem>
             </PanelSectionRow>
           </>
@@ -164,29 +157,18 @@ const Content: VFC = () => {
       </PanelSection>
       <PanelSection title={ "Information" }>
         <PanelSectionRow>
-          <p>Make sure your SteamDeck and the devices you are accessing the files with are on the same network.</p>
+          Make sure your SteamDeck and the devices you are accessing the files with are on the same network.
         </PanelSectionRow>
       </PanelSection>
     </>
   );
 };
 
-
-
 export default definePlugin((serverApi: ServerAPI) => {
   const fileBrowserManager = new FileBrowserManager( serverApi );
 
-  serverApi.routerHook.addRoute("/decky-filebrowser-settings", () => (
-      <AppContextProvider fileBrowserManager={fileBrowserManager}>
-      <Settings />
-    </AppContextProvider>
-  ), {
-    exact: true,
-  });
-
-
   return {
-    title: <div className={staticClasses.Title}>File Browser</div>,
+    title: <div className={staticClasses.Title}>NewDeckyFileBrowser</div>,
     content: (
       <AppContextProvider fileBrowserManager={fileBrowserManager} >
         <Content />
@@ -194,7 +176,6 @@ export default definePlugin((serverApi: ServerAPI) => {
     ),
     icon: <FaServer />,
     onDismount: () => {
-      serverApi.routerHook.removeRoute("/decky-filebrowser-settings");
     }
   };
 });
