@@ -5,13 +5,16 @@ import {
   PanelSectionRow,
   ServerAPI,
   staticClasses,
-  showModal
+  showModal,
+  DialogButton
 } from "decky-frontend-lib";
 import { useContext, useEffect, useState, VFC } from "react";
 import { FaServer } from "react-icons/fa";
+import { BsExclamationCircleFill } from "react-icons/bs";
 import { QRCodeSVG } from 'qrcode.react';
-import Settings from './settings';
 import { AppContext, AppContextProvider } from './utils/app-context';
+import Settings from './settings';
+import About from './components/about';
 import FileBrowserManager from './state/filebrowser-manager';
 
 const Content: VFC = () => {
@@ -100,6 +103,10 @@ const Content: VFC = () => {
     }, 4000);
   };
 
+    const onAboutClick = (): void => {
+      
+    };
+
   return (
     <>
       <PanelSection title={ isServerRunning ? "Server ON" : "Server OFF" }>
@@ -141,6 +148,22 @@ const Content: VFC = () => {
               Go to Settings
               </ButtonItem>
             </PanelSectionRow>
+            <PanelSectionRow
+                style={{
+                  display: "flex",
+                  width: "100%",
+                  boxShadow: "none",
+                  alignItems: "end",
+                  justifyContent: "flex-end"
+                }}>
+                <DialogButton
+                  style={{ height: "28px", width: "40px", minWidth: 0, padding: "10px 12px" }}
+                  onClick={() =>
+                    showModal(<About />, window)}
+                >
+                <BsExclamationCircleFill style={{ marginTop: "-4px", display: "block" }} />
+              </DialogButton>
+            </PanelSectionRow>
           </>
           )
         }
@@ -168,7 +191,7 @@ export default definePlugin((serverApi: ServerAPI) => {
   const fileBrowserManager = new FileBrowserManager( serverApi );
 
   return {
-    title: <div className={staticClasses.Title}>NewDeckyFileBrowser</div>,
+    title: <div className={staticClasses.Title}>DeckyFileBrowser</div>,
     content: (
       <AppContextProvider fileBrowserManager={fileBrowserManager} >
         <Content />
