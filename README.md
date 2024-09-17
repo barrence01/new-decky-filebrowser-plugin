@@ -11,7 +11,9 @@ This plugin allows people to run [File Browser](https://github.com/filebrowser/f
 
 > This plugin currently includes a pre-compiled copy of File Browser, which is far from ideal. For the future releases, I plan to have a more transparent way of distributing File Browser within this project.
 
-With [File Browser](https://github.com/filebrowser/filebrowser) you have an **authenticated** web based file browser, that you can manage and transfer files from your Steam Deck. From the File Browser web interface you can:
+With [File Browser](https://github.com/filebrowser/filebrowser) you have an **authenticated** web based file browser, that you can manage and transfer files from your Steam Deck.
+
+### From the File Browser web interface you can:
 - Upload files to your Steam Deck
 - Download files from your Steam Deck
 - View and Edit files from your Steam Deck
