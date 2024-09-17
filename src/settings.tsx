@@ -1,21 +1,21 @@
-import { useContext, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, VFC } from "react";
+import {IoMdAlert} from "react-icons/io";
 import {
   ButtonItem,
   TextField,
-  PanelSection,
-  PanelSectionRow,
-  ScrollPanel
+  ModalRoot,
+  DialogHeader,
+  DialogBody,
+  Field,
+  DialogSubHeader
 } from "decky-frontend-lib";
-import { AppContext } from "./utils/app-context";
 
-const Settings = () => {
+const Settings: VFC<{  closeModal?: () => void, fileBrowserManager }> =  ( { closeModal, fileBrowserManager } ) => {
   // @ts-ignore
-  const { fileBrowserManager } = useContext(AppContext);
   const [port, setPort] = useState( null );
   const [username, setUsername] = useState( null );
   const [password, setPassword] = useState( null );
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [invalidPortError, setInvalidPortError] = useState(false);
   const [invalidUsernameError, setInvalidUsernameError] = useState(false);
   const [invalidPasswordError, setInvalidPasswordError] = useState(false);
@@ -65,9 +65,9 @@ const Settings = () => {
 
       if(result == "success"){
         showSuccess("usernameAndPassword", "Credentials changed successfully.");
-        return;
+      } else {
+        showError("usernameAndPassword", "Could not save credentials, check the logs for more details.");
       }
-      showError("usernameAndPassword", "Could not save credentials, check the logs for more details.");
     }
     
     setIsSaving(false);
@@ -196,94 +196,88 @@ const Settings = () => {
 
   useEffect(() => {
     const loadDefaults = async () => {
-      setIsLoading(true);
       const _port = await fileBrowserManager.getPortFromSettings();
       setPort(_port);
       const _username = await fileBrowserManager.getUsernameFromSettings();
       setUsername(_username);
-      setIsLoading(false);
     };
 
     loadDefaults();  
   }, []);
 
   return (
-    <ScrollPanel style={{ marginTop: "50px", marginBottom: "30px", color: "white" }}>
-      
-        {isLoading ? (
-              <div style={{ textAlign: "center" }}>
-                <h2>Loading...</h2>
+    <ModalRoot closeModal={closeModal}>
+      <DialogHeader>NewDeckyFileBrowser Settings</DialogHeader>
+      <DialogSubHeader>Change port number</DialogSubHeader>
+        <DialogBody>
+          <Field label="Port" 
+          bottomSeparator="none"
+          icon={invalidPortError ? <IoMdAlert size={20} color="red"/> : null}>
+          <TextField
+              description="TCP port used for connection."
+              onChange={handlePortChange}
+              value={port}
+              style={{
+                border: invalidPortError ? "1px red solid" : undefined
+              }}
+            />
+            </Field>
+            {portErrorMessage && (
+              <div style={{ color: 'red', fontWeight: '300', whiteSpace: 'pre-wrap', overflowWrap: 'break-word'  }}>
+                {portErrorMessage}
               </div>
-        ) : (
-            <PanelSection title="File Browser options" style={{ marginTop: "100px", marginBottom: "30px", color: "white"}}>
-              <PanelSectionRow>
-                <TextField
-                  label="Port"
-                  description="TCP port used for connection. The port number 1337 cannot be used because of decky."
-                  onChange={handlePortChange}
-                  value={port}
-                  style={{
-                    border: invalidPortError ? "1px red solid" : undefined, marginBottom: "0px"
-                  }}
-                />
-                {portErrorMessage && (
-                  <div style={{ color: 'red', fontWeight: '300' }}>
-                    {portErrorMessage}
-                  </div>
-                )}
-                {portSuccessMessage && (
-                  <div style={{ color: 'green', fontWeight: 'bold' }}>
-                    {portSuccessMessage}
-                  </div>
-                )}
-                <PanelSectionRow>
-                  <ButtonItem onClick={handleSavePort} disabled={isSaving}>
-                    Save
-                  </ButtonItem>
-                </PanelSectionRow>
-              </PanelSectionRow>
+            )}
+            {portSuccessMessage && (
+              <div style={{ color: 'green', fontWeight: 'bold', whiteSpace: 'pre-wrap', overflowWrap: 'break-word'  }}>
+                {portSuccessMessage}
+              </div>
+            )}
+            <ButtonItem onClick={handleSavePort} disabled={isSaving}>
+              Save
+            </ButtonItem>
+        </DialogBody>
 
-              <PanelSectionRow>
-                <TextField
-                  label="Username"
-                  description="Set the username for the file browser."
-                  onChange={handleUsernameChange}
-                  value={username}
-                  style={{
-                    border: invalidUsernameError ? "1px red solid" : undefined
-                  }}
-                />
-              </PanelSectionRow>
-
-              <PanelSectionRow>
-                <TextField
-                  label="Password"
-                  description="Set the password for the file browser."
-                  onChange={handlePasswordChange}
-                  value={password}
-                  style={{
-                    border: invalidPasswordError ? "1px red solid" : undefined
-                  }}
-                />
-                {usernamePasswordErrorMessage && (
-                  <div style={{ color: 'red', fontWeight: '300' }}>
-                    {usernamePasswordErrorMessage}
-                  </div>
-                )}
-                {usernamePasswordSuccessMessage && (
-                  <div style={{ color: 'green', fontWeight: 'bold' }}>
-                    {usernamePasswordSuccessMessage}
-                  </div>
-                )}
-                <PanelSectionRow>
-                  <ButtonItem onClick={handleSaveUsernamePassword} disabled={isSaving}>
-                    Save
-                  </ButtonItem>
-                </PanelSectionRow>
-              </PanelSectionRow>
-            </PanelSection>
-        )}
-    </ScrollPanel>
+        <DialogSubHeader>Change credentials</DialogSubHeader>
+        <DialogBody>
+            <Field label="Username" 
+            bottomSeparator="none"
+            icon={invalidUsernameError ? <IoMdAlert size={20} color="red"/> : null}>
+              <TextField
+                description="Set the username for the file browser."
+                onChange={handleUsernameChange}
+                value={username}
+                style={{
+                  border: invalidUsernameError ? "1px red solid" : undefined
+                }}
+              />
+            </Field>
+            <Field label="Password"
+            bottomSeparator="none"
+            icon={invalidPasswordError ? <IoMdAlert size={20} color="red"/> : null}>
+              <TextField
+                description="Set the password for the file browser."
+                onChange={handlePasswordChange}
+                value={password}
+                style={{
+                  border: invalidPasswordError ? "1px red solid" : undefined
+                }}
+              />
+            </Field>
+              {usernamePasswordErrorMessage && (
+                <div style={{ color: 'red', fontWeight: '300', whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>
+                  {usernamePasswordErrorMessage}
+                </div>
+              )}
+              {usernamePasswordSuccessMessage && (
+                <div style={{ color: 'green', fontWeight: 'bold', whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>
+                  {usernamePasswordSuccessMessage}
+                </div>
+              )}
+              <ButtonItem onClick={handleSaveUsernamePassword} disabled={isSaving}>
+                Save
+              </ButtonItem>
+        </DialogBody>
+    </ModalRoot>
   );
 };
 
