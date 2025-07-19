@@ -92,7 +92,7 @@ class Plugin:
                 stdout = await process.stdout.read(300)
                 decky_plugin.logger.error(stdout.decode("utf-8"))
                 decky_plugin.logger.error("Maybe there's something wrong with the DB? The DeckyFileBrowser will try to self repair.")
-                self.check_settings(self)
+                await self.check_settings(self)
                 return {
                     "status": "offline",
                     "output": "none"
