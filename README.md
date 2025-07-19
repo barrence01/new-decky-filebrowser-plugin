@@ -21,3 +21,5 @@ With [File Browser](https://github.com/filebrowser/filebrowser) you have an **au
 
 By default, the File Browser instance requires authorization, and the default credentials are:
 <br/>User: `admin` Password: `admin`
+
+![5177036747354255677](https://github.com/user-attachments/assets/34aff1b9-b926-4c7d-9f69-300b57482db5)
