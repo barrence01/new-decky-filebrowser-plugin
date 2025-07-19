@@ -1,38 +1,21 @@
-import { ServerAPI } from 'decky-frontend-lib';
+import { call, callable } from "@decky/api";
 export default class FileBrowserManager {
-  private port: Number;
-  private pid: Number;
-  private ipv4_address: string;
-  private serverAPI: ServerAPI;
-  private runStatus: boolean;
+  public call: typeof call<any[this], any>;
+  public callable: typeof callable<any[this], any>;
+  private port: Number = 8082;
+  private pid: Number = -1;
+  private ipv4_address: string = "";
+  private runStatus: boolean = false;
 
-  // @ts-ignore
-  private setServer(serv: ServerAPI): void {
-    this.serverAPI = serv;
-  }
-
-  constructor(serverAPI: ServerAPI) {
-    this.serverAPI = serverAPI;
+  constructor() {
+    this.call = call;
+    this.callable = callable;
     this.runStatus = false;
     this.port = 8082;
   }
 
-  getServer(): ServerAPI {
-    return this.serverAPI;
-  }
-
   isServerRunning(): boolean {
     return this.runStatus;
-  }
-
-  async getUserSettings() {
-    const result = await this.serverAPI.callPluginMethod("get_user_settings", {});
-
-    if ( result.success ) {
-      return result.result;
-    } else {
-      return new Error(result.result);
-    }
   }
 
   getPort() {
@@ -40,10 +23,10 @@ export default class FileBrowserManager {
   }
 
   async getPortFromSettings() {
-    const result = await this.serverAPI.callPluginMethod("get_setting", { key: "port" });
+    const result = await this.call("get_setting", "port");
 
-    if ( result.result?.output ) {
-      this.port = result.result as Number;
+    if ( result ) {
+      this.port =  Number(result);
       return this.getPort();
     } else {
       return this.getPort();
@@ -51,20 +34,20 @@ export default class FileBrowserManager {
   }
 
   async getUsernameFromSettings() {
-    const result = await this.serverAPI.callPluginMethod("get_setting", { key: "currentUsername" });
+    const result = await this.call("get_setting", "currentUsername");
 
-    if ( result.result ) {
-      return result.result;
+    if ( result ) {
+      return result;
     } else {
       return "";
     }
   }
 
   async setPort(port: Number) {
-    const result = await this.serverAPI.callPluginMethod("save_user_settings", { key: "port", value: port });
+    const result = await this.call("save_user_settings", "port", port);
 
-    if ( result.success ) {
-      this.port = result.result as Number;
+    if ( result ) {
+      this.port =  Number(result);
       return this.getPort();
     } else {
       return this.getPort();
@@ -72,20 +55,20 @@ export default class FileBrowserManager {
   }
 
   async getFileBrowserStatus() {
-    const result = await this.serverAPI.callPluginMethod("getFileBrowserStatus");
+    const result = await this.call("getFileBrowserStatus");
 
-    if ( result.result?.status == "online" ) {
-      this.port = result.result?.port as Number;
-      this.ipv4_address = result.result?.ipv4_address as string;
-      this.pid = result.result?.pid as Number;
+    if (result?.status == "online" ) {
+      this.port = Number(result?.port);
+      this.ipv4_address = String(result?.ipv4_address);
+      this.pid = Number(result?.pid);
       this.runStatus = true;
 
-      return result.result?.status;
+      return result?.status;
     } else {
-      this.port = result.result?.port as Number;
+      this.port = Number(result?.port);
       this.runStatus = false;
 
-      return result.result?.status;
+      return result?.status;
     }
   }
 
@@ -98,30 +81,28 @@ export default class FileBrowserManager {
   }
 
   async startFileBrowser() {
-    return await this.serverAPI.callPluginMethod("startFileBrowser", {
-      port: this.getPort()
-    });
+    return await this.call("startFileBrowser", this.getPort());
   }
 
   async stopFileBrowser() {
-    return await this.serverAPI.callPluginMethod("stopFileBrowser");
+    return await this.call("stopFileBrowser");
   }
 
   async saveUsernamePassword(newUsername: string, newPassword: string) {
-    const result = await this.serverAPI.callPluginMethod("save_username_password", { username: newUsername, password: newPassword });
-
     try{
-      return result.result?.output;
+      const result = await this.call("save_username_password", newUsername, newPassword);
+      
+      return result?.output;
     } catch (error) {
       return "failed";
     }
   }
 
   async fileBrowserSendLogInfo( text: string ) {
-    return await this.serverAPI.callPluginMethod("logInfo", { msg: "Javascript: " + text });
+    return await this.call("logInfo", "Javascript: " + text);
   }
 
   async fileBrowserSendLogError( text: string ) {
-    return await this.serverAPI.callPluginMethod("logError", { msg: "Javascript: " + text });
+    return await this.call("logError", "Javascript: " + text);
   }
 }
