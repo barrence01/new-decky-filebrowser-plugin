@@ -1,3 +1,7 @@
+CHECKSUM:8d9129269f9e633356aa1a1197301d352b77877afd00cdf4ef480ce5f0428522
+VERSION DATE: 01-04-2024
+GITHUB TREE: https://github.com/filebrowser/filebrowser/tree/ae0af1f996e9c855ccd1bf4af90f03787f52d301
+
 This is the license of the file browser software that's under apache 2.0.
 
 
