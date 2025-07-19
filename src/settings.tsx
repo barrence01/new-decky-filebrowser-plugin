@@ -8,13 +8,13 @@ import {
   DialogBody,
   Field,
   DialogSubHeader
-} from "decky-frontend-lib";
+} from "@decky/ui";
 
-const Settings: VFC<{  closeModal?: () => void, fileBrowserManager }> =  ( { closeModal, fileBrowserManager } ) => {
+const Settings: VFC<{  closeModal?: () => void, fileBrowserManager: any }> =  ( { closeModal, fileBrowserManager } ) => {
   // @ts-ignore
-  const [port, setPort] = useState( null );
-  const [username, setUsername] = useState( null );
-  const [password, setPassword] = useState( null );
+  const [port, setPort] = useState( undefined );
+  const [username, setUsername] = useState( undefined );
+  const [password, setPassword] = useState( undefined );
   const [isSaving, setIsSaving] = useState(false);
   const [invalidPortError, setInvalidPortError] = useState(false);
   const [invalidUsernameError, setInvalidUsernameError] = useState(false);
@@ -73,7 +73,7 @@ const Settings: VFC<{  closeModal?: () => void, fileBrowserManager }> =  ( { clo
     setIsSaving(false);
   }, [username, password, invalidUsernameError, invalidPasswordError]);
 
-  const handlePortChange = (e) => {
+  const handlePortChange = (e: any) => {
     setPort(e.target.value);
     showError("port", "");
     setInvalidPortError(true);
@@ -112,11 +112,11 @@ const Settings: VFC<{  closeModal?: () => void, fileBrowserManager }> =  ( { clo
     setInvalidPortError(false);
   };
 
-  const handleUsernameChange = (e) => {
+  const handleUsernameChange = (e: any) => {
     handleUsernamePasswordChange("username", setUsername, setInvalidUsernameError, e.target.value)
   };
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = (e: any) => {
     handleUsernamePasswordChange("password", setPassword, setInvalidPasswordError, e.target.value)
   };
 

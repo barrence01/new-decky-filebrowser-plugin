@@ -1,18 +1,20 @@
 import {
   ButtonItem,
-  definePlugin,
   PanelSection,
   PanelSectionRow,
-  ServerAPI,
   staticClasses,
   showModal,
   DialogButton
-} from "decky-frontend-lib";
-import { useContext, useEffect, useState, VFC } from "react";
+} from "@decky/ui";
+import {
+  definePlugin
+} from "@decky/api"
+
+import { useEffect, useState, VFC } from "react";
 import { FaServer } from "react-icons/fa";
 import { BsExclamationCircleFill } from "react-icons/bs";
 import { QRCodeSVG } from 'qrcode.react';
-import { AppContext, AppContextProvider } from './utils/app-context';
+import { AppContextProvider, useAppContext } from './utils/app-context';
 import Settings from './settings';
 import About from './components/about';
 import FileBrowserManager from './state/filebrowser-manager';
@@ -20,16 +22,14 @@ import FileBrowserManager from './state/filebrowser-manager';
 const Content: VFC = () => {
   const [ isLoading, setIsLoading ] = useState( false );
   const [ serverStatus, setServerStatus ] = useState( false );
-  const [ serverIP, setServerIP ] = useState( "127.0.0.1" );
-  const [ processPID, setProcessPID ] = useState( -1 );
-  const [ port, setPort ] = useState( null );
-  const [errorMessage, setErrorMessage] = useState("");
+  const [ serverIP, setServerIP ] = useState<string>( "127.0.0.1" );
+  const [ processPID, setProcessPID ] = useState<Number>( -1 );
+  const [ port, setPort ] = useState<Number>( -1 );
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
-  // @ts-ignore
-  const { fileBrowserManager } = useContext(AppContext);
-  //const serverApi = fileBrowserManager.getServer();
+  const { fileBrowserManager } = useAppContext();
 
-  const isServerRunning = serverStatus && processPID > 0;
+  const isServerRunning = serverStatus && processPID > new Number(0);
 
   const handleStartServer = async () => {
     try{
@@ -38,7 +38,7 @@ const Content: VFC = () => {
         console.log( 'Server is running, closing...' );
         const result = await fileBrowserManager.stopFileBrowser();
 
-        if (result.result?.status && (result.result?.status == "offline")) {
+        if (result?.status && (result?.status == "offline")) {
           setProcessPID( -1 );
           setServerStatus( false );
           console.log( 'Server closed.' );
@@ -50,7 +50,7 @@ const Content: VFC = () => {
       }
 
       const result = await fileBrowserManager.startFileBrowser();
-      if (result.result?.status && (result.result?.status == "online")) {
+      if (result?.status && (result?.status == "online")) {
         await fileBrowserManager.getFileBrowserStatus();
         setPort(fileBrowserManager.getPort());
         setServerIP(fileBrowserManager.getIPV4Address());
@@ -58,8 +58,8 @@ const Content: VFC = () => {
         setProcessPID(fileBrowserManager.getPID());
         return;
       }
-      if (result.result?.status && (result.result?.status == "error")) {
-        showError(result.result?.output);
+      if (result?.status && (result?.status == "error")) {
+        showError(result?.output);
         return;
       }
 
@@ -103,10 +103,6 @@ const Content: VFC = () => {
     }, 4000);
   };
 
-    const onAboutClick = (): void => {
-      
-    };
-
   return (
     <>
       <PanelSection title={ isServerRunning ? "Server ON" : "Server OFF" }>
@@ -148,14 +144,14 @@ const Content: VFC = () => {
               Go to Settings
               </ButtonItem>
             </PanelSectionRow>
-            <PanelSectionRow
-                style={{
+            <PanelSectionRow>
+                {/* style={{
                   display: "flex",
                   width: "100%",
                   boxShadow: "none",
                   alignItems: "end",
                   justifyContent: "flex-end"
-                }}>
+                }}> */}
                 <DialogButton
                   style={{ height: "28px", width: "40px", minWidth: 0, padding: "10px 12px" }}
                   onClick={() =>
@@ -173,7 +169,7 @@ const Content: VFC = () => {
           "Loading..."
           : (
             <PanelSectionRow>
-              Port: { port }
+              Port: { Number(port) }
             </PanelSectionRow>
           )
         }
@@ -187,11 +183,13 @@ const Content: VFC = () => {
   );
 };
 
-export default definePlugin((serverApi: ServerAPI) => {
-  const fileBrowserManager = new FileBrowserManager( serverApi );
+export default definePlugin(() => {
+  const fileBrowserManager = new FileBrowserManager();
 
   return {
-    title: <div className={staticClasses.Title}>DeckyFileBrowser</div>,
+    name: "DeckyFileBrowser",
+    titleView: <div className={staticClasses.Title}>DeckyFileBrowser</div>,
+    version: "1.5.0",
     content: (
       <AppContextProvider fileBrowserManager={fileBrowserManager} >
         <Content />

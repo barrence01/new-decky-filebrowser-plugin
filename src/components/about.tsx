@@ -4,7 +4,7 @@ import {
   DialogHeader,
   DialogBody,
   DialogSubHeader
-} from "decky-frontend-lib";
+} from "@decky/ui";
 
 const About: VFC<{  closeModal?: () => void }> =  ( { closeModal } ) => {
 
