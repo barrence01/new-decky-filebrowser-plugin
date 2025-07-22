@@ -364,7 +364,7 @@ class Plugin:
                 
                 now = datetime.now()
                 if now - timestamp > timedelta(minutes=settings.getSetting("timeout")):
-                    decky.logger.warning(f"More than {settings.getSetting("timeout")} minutes passed, closing FileBrowser...")
+                    decky.logger.warning(f'More than {settings.getSetting("timeout")} minutes passed, closing FileBrowser...')
                     await self.stopFileBrowser()
 
 
@@ -378,7 +378,7 @@ class Plugin:
     async def _main(self: 'Plugin'):
         decky.logger.info("Hello World!")
         await self.updateLastTimeUsed()
-        if os.path.exists(pidfile):
+        if await self.isFileBrowserOnline():
             os.remove(pidfile)
         decky.logger.info("Running settings check for the file browser...")
         await self.check_settings()
