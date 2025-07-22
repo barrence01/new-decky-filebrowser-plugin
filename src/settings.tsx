@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, VFC } from "react";
+import { useCallback, useEffect, useState, FunctionComponent } from "react";
 import {IoMdAlert} from "react-icons/io";
 import {
   ButtonItem,
@@ -10,7 +10,7 @@ import {
   DialogSubHeader
 } from "@decky/ui";
 
-const Settings: VFC<{  closeModal?: () => void, fileBrowserManager: any }> =  ( { closeModal, fileBrowserManager } ) => {
+const Settings: FunctionComponent<{  closeModal?: () => void, fileBrowserManager: any }> =  ( { closeModal, fileBrowserManager } ) => {
   // @ts-ignore
   const [port, setPort] = useState( undefined );
   const [username, setUsername] = useState( undefined );
@@ -205,9 +205,21 @@ const Settings: VFC<{  closeModal?: () => void, fileBrowserManager: any }> =  ( 
     loadDefaults();  
   }, []);
 
+  const handleResetSettings = useCallback(async () => { 
+      const loadDefaults = async () => {
+        const _port = await fileBrowserManager.getPortFromSettings();
+        setPort(_port);
+        const _username = await fileBrowserManager.getUsernameFromSettings();
+        setUsername(_username);
+      };
+
+      await fileBrowserManager.resetSettings(username, password);
+      loadDefaults();  
+  }, []);
+
   return (
     <ModalRoot closeModal={closeModal}>
-      <DialogHeader>NewDeckyFileBrowser Settings</DialogHeader>
+      <DialogHeader>DeckyFileBrowser Settings</DialogHeader>
       <DialogSubHeader>Change port number</DialogSubHeader>
         <DialogBody>
           <Field label="Port" 
@@ -276,6 +288,11 @@ const Settings: VFC<{  closeModal?: () => void, fileBrowserManager: any }> =  ( 
               <ButtonItem onClick={handleSaveUsernamePassword} disabled={isSaving}>
                 Save
               </ButtonItem>
+        </DialogBody>
+        <DialogBody style={{ marginTop: "1%" }}>
+          <ButtonItem onClick={handleResetSettings} bottomSeparator="none">
+            Reset settings
+          </ButtonItem>
         </DialogBody>
     </ModalRoot>
   );

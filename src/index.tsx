@@ -145,13 +145,6 @@ const Content: VFC = () => {
               </ButtonItem>
             </PanelSectionRow>
             <PanelSectionRow>
-                {/* style={{
-                  display: "flex",
-                  width: "100%",
-                  boxShadow: "none",
-                  alignItems: "end",
-                  justifyContent: "flex-end"
-                }}> */}
                 <DialogButton
                   style={{ height: "28px", width: "40px", minWidth: 0, padding: "10px 12px" }}
                   onClick={() =>
