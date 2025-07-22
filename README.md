@@ -1,7 +1,6 @@
 * This is a fork of decky-filebrowser-plugin from https://github.com/heydemoura
 
-* To manually install in decky loader, the release folder must be placed on "home/homebrew/plugins"
-  <br/>(The directory may be read only, you would need to allow write in the folder properties)
+* To manually install in decky loader, use the option to install from zip in developer options
 
 # New Decky File Browser Plugin
 
