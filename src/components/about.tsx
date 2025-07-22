@@ -15,7 +15,7 @@ const About: VFC<{  closeModal?: () => void }> =  ( { closeModal } ) => {
         <DialogBody>
           William Barrence
         </DialogBody>
-        <DialogSubHeader>Former Author</DialogSubHeader>
+        <DialogSubHeader>Creator</DialogSubHeader>
         <DialogBody>
           Heyde Moura
         </DialogBody>

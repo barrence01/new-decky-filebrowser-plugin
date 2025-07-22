@@ -98,6 +98,15 @@ export default class FileBrowserManager {
     }
   }
 
+  async resetSettings() {
+    try{
+      await this.call("reset_settings");
+      return "success";
+    } catch (error) {
+      return "failed";
+    }
+  }
+
   async fileBrowserSendLogInfo( text: string ) {
     return await this.call("logInfo", "Javascript: " + text);
   }
