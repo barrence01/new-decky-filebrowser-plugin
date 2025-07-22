@@ -146,7 +146,7 @@ const Content: VFC = () => {
             </PanelSectionRow>
             <PanelSectionRow>
                 <DialogButton
-                  style={{ height: "28px", width: "40px", minWidth: 0, padding: "10px 12px" }}
+                  style={{ height: "28px", width: "40px", minWidth: 0, padding: "10px 12px", float:"right", marginTop:"1%" }}
                   onClick={() =>
                     showModal(<About />, window)}
                 >
@@ -157,16 +157,18 @@ const Content: VFC = () => {
           )
         }
       </PanelSection>
-      <PanelSection title={ "Current Settings" }>
-        { isLoading ?
-          "Loading..."
-          : (
-            <PanelSectionRow>
-              Port: { Number(port) }
-            </PanelSectionRow>
-          )
-        }
-      </PanelSection>
+      <div style={{marginTop:"10%"}}>
+        <PanelSection title={ "Current Settings" }>
+          { isLoading ?
+            "Loading..."
+            : (
+              <PanelSectionRow>
+                Port: { Number(port) }
+              </PanelSectionRow>
+            )
+          }
+        </PanelSection>
+      </div>
       <PanelSection title={ "Information" }>
         <PanelSectionRow>
           Make sure your SteamDeck and the devices you are accessing the files with are on the same network.
