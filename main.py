@@ -23,7 +23,6 @@ filebrowser_settings_path = decky.DECKY_PLUGIN_SETTINGS_DIR + "/settings.json"
 filebrowser_cert_path = decky.DECKY_PLUGIN_DIR + "/bin/certs/cert.pem"
 filebrowser_key_path = decky.DECKY_PLUGIN_DIR + "/bin/certs/key.pem"
 filebrowser_default_port = 8082
-filebrowser_default_timeout = 15
 filebrowser_default_address = "0.0.0.0"
 filebrowser_log_path = decky.DECKY_PLUGIN_LOG_DIR + "/filebrowser-log.txt"
 
@@ -36,7 +35,7 @@ class Plugin:
     async def runCommand(self: 'Plugin', command):
         decky.logger.info("Running command: " + command)
         try:
-            process = await asyncio.create_subprocess_shell(command, shell=True, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            process = await asyncio.create_subprocess_shell(command, shell=True, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=self._get_clean_env())
 
             output, error = await process.communicate()
             output_str = output.decode("utf-8") if output else ""
@@ -68,7 +67,6 @@ class Plugin:
 
     async def getFileBrowserStatus(self: 'Plugin'):
         try:
-            await self.updateLastTimeUsed()
             if not await self.isFileBrowserOnline():
                 decky.logger.info("The server is not online.")
                 return {
@@ -116,8 +114,9 @@ class Plugin:
             command = f"{filebrowser_bin} -c {filebrowser_settings_path}"
             decky.logger.info("Running FileBrowser command: " + command)
 
-            process = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-            await asyncio.sleep(0.2) # This is needed since the file browser needs some time to start the process and show errors
+            process = await asyncio.create_subprocess_shell(command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=self._get_clean_env())
+            await asyncio.sleep(0.2) # T    his is needed since the file browser needs some time to start the process and show errors
+            decky.logger.info(f"Process RC is: {process.returncode}")
 
             if(process.returncode is None):
                 with open(pidfile, "w+") as file:
@@ -130,7 +129,9 @@ class Plugin:
             else:
                 decky.logger.error("The server could not be started.")
                 stdout = await process.stdout.read(300)
+                stderr = await process.stderr.read(300)
                 decky.logger.error(stdout.decode("utf-8"))
+                decky.logger.error(stderr.decode("utf-8"))
                 decky.logger.error("Maybe there's something wrong with the DB? The DeckyFileBrowser will try toselfrepair.")
                 await self.check_settings()
                 return {
@@ -236,16 +237,6 @@ class Plugin:
         
         decky.logger.info(f"generated hash: {output_str}")
         return output_str
-    
-
-    async def addRunners(self):
-        decky.logger.info(f"adding file browser runners")
-        await asyncio.sleep(0.1)
-        decky.logger.info(await self.runCommand(f'{filebrowser_bin} -d "{filebrowser_database_path}" cmds add after_copy "{SAVE_CURRENT_TIME_SCRIPT}"'))
-        decky.logger.info(await self.runCommand(f'{filebrowser_bin} -d "{filebrowser_database_path}" cmds add after_delete "{SAVE_CURRENT_TIME_SCRIPT}"'))
-        decky.logger.info(await self.runCommand(f'{filebrowser_bin} -d "{filebrowser_database_path}" cmds add after_rename "{SAVE_CURRENT_TIME_SCRIPT}"'))
-        decky.logger.info(await self.runCommand(f'{filebrowser_bin} -d "{filebrowser_database_path}" cmds add before_save "{SAVE_CURRENT_TIME_SCRIPT}"'))
-        decky.logger.info(await self.runCommand(f'{filebrowser_bin} -d "{filebrowser_database_path}" cmds add before_upload "{SAVE_CURRENT_TIME_SCRIPT}"'))
 
     async def reset_settings(self: 'Plugin'):
         settings.setSetting( "port", filebrowser_default_port )
@@ -255,15 +246,13 @@ class Plugin:
         settings.setSetting( "cert", filebrowser_cert_path)
         settings.setSetting( "root", decky.DECKY_USER_HOME)
         settings.setSetting( "log", filebrowser_log_path)
-        settings.setSetting( "timeout", 15)
 
 
     async def filebrowser_init(self: 'Plugin'):
         command = f"{filebrowser_bin} -c {filebrowser_settings_path}"
-        process = await asyncio.create_subprocess_shell(command, shell=True, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        process = await asyncio.create_subprocess_shell(command, shell=True, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=self._get_clean_env())
         await asyncio.sleep(0.2)
         process.kill()
-        await self.addRunners()
         decky.logger.info("Filebrowser database was successfully initialized.")
         return "success"
     
@@ -279,7 +268,7 @@ class Plugin:
             test_2 = settings.getSetting("address")
             test_3 = settings.getSetting("database")
             if any(var is None for var in [test, test_2, test_3]):
-                decky.logger.warning("Could not find the configurations for file browser, recreating it with default values.")
+                decky.logger.warning("Could not find the configurations for file browser, recreating it wi_get_clean_envth default values.")
                 await self.reset_settings()
             
             if not os.path.exists(filebrowser_database_path):
@@ -287,32 +276,9 @@ class Plugin:
                 decky.logger.warning("Filebrowser database file not found. Initializing a new database...")
                 await self.filebrowser_init()
                 decky.logger.warning("The username and password was set to 'admin'. It is advisable to change it.")
-            await self.write_save_current_time_file()
         except Exception as e:
             decky.logger.error("Could not fully set the configurations for file browser. It may not work properly.")
             decky.logger.error(traceback.format_exc(e))
-
-
-    async def write_save_current_time_file(self):
-
-        if os.path.exists(SAVE_CURRENT_TIME_SCRIPT):
-            return
-
-        last_action_file_location = f'#!/bin/bash \n LAST_ACTION_FILE="{settings_dir}/lastActionTime.txt" \n'
-        code = last_action_file_location + """ if [ -f "$LAST_ACTION_FILE" ]; then
-                                                    tail -n +2 "$LAST_ACTION_FILE" > "$LAST_ACTION_FILE.tmp"
-                                                    { echo "UpdatedAt=$(date '+%Y-%m-%d %H:%M:%S')"; cat "$LAST_ACTION_FILE.tmp"; } > "$LAST_ACTION_FILE"
-                                                    rm "$LAST_ACTION_FILE.tmp"
-                                                else
-                                                    # Cria o arquivo com apenas a data no topo
-                                                    echo "UpdatedAt=$(date '+%Y-%m-%d %H:%M:%S')" > "$LAST_ACTION_FILE"
-                                                fi
-                                            """
-        with open(SAVE_CURRENT_TIME_SCRIPT, "w+") as file:
-            file.write(str(code))
-
-        result = await self.runCommand(f'chmod u+r+x {SAVE_CURRENT_TIME_SCRIPT}')
-        decky.logger.info(result)
     
 
     async def remove_file_browser_files(self):
@@ -333,56 +299,20 @@ class Plugin:
                 os.remove(SAVE_CURRENT_TIME_SCRIPT)
         except:
             decky.logger.error(f"it was not possible to delete file {SAVE_CURRENT_TIME_SCRIPT}")
-        
 
-    async def updateLastTimeUsed(self):
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        updated_line = f"UpdatedAt={current_time}\n"
-        with open(LAST_ACTION_TIME_FILE, "w+") as file:
-            file.write(updated_line)
-    
-
-    async def autoSuspendInactiveFileBrowser(self):
-        if not await self.isFileBrowserOnline():
-            return
-        
-        if os.path.exists(LAST_ACTION_TIME_FILE):
-            with open(LAST_ACTION_TIME_FILE, "r") as file:
-                first_line = file.readline().strip()
-
-                if not first_line.startswith("UpdatedAt="):
-                    decky.logger.error("Invalid time format.")
-                    return
-                
-                timestamp_str = first_line.replace("UpdatedAt=", "")
-                timestamp = None
-                try:
-                    timestamp = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
-                except ValueError:
-                    decky.logger.error("Invalid datetime format.")
-                    return
-                
-                now = datetime.now()
-                if now - timestamp > timedelta(minutes=settings.getSetting("timeout")):
-                    decky.logger.warning(f'More than {settings.getSetting("timeout")} minutes passed, closing FileBrowser...')
-                    await self.stopFileBrowser()
-
-
-    async def background_filebrowser_checker(self):
-        while True:
-            await self.autoSuspendInactiveFileBrowser()
-            await asyncio.sleep(60)
+    def _get_clean_env(self):
+        env = os.environ.copy()
+        env["LD_LIBRARY_PATH"] = ""
+        return env
 
 
     # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
     async def _main(self: 'Plugin'):
         decky.logger.info("Hello World!")
-        await self.updateLastTimeUsed()
-        if await self.isFileBrowserOnline():
+        if os.path.exists(pidfile):
             os.remove(pidfile)
         decky.logger.info("Running settings check for the file browser...")
         await self.check_settings()
-        self.background_task = asyncio.create_task(self.background_filebrowser_checker())
 
 
     # Function called first during the unload process, utilize this to handle your plugin being removed
