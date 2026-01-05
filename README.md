@@ -1,3 +1,13 @@
+## ⚠️ Project Status
+
+Development of this plugin has been discontinued due to multiple compatibility issues with its dependencies on newer Arch Linux versions, as well as limited flexibility to add new features.
+
+Since then, I’ve been developing a new plugin from scratch with minimal external dependencies.
+
+👉 Check out **decky-file-explorer** for the actively maintained replacement.
+
+## 
+
 * This is a fork of decky-filebrowser-plugin from https://github.com/heydemoura
 
 * To manually install in decky loader, use the option to install from zip in developer options
